@@ -38,6 +38,15 @@ src/main/java/com/flightbooking/
     ├── BookingStatus.java     CONFIRMED | CANCELLED
     ├── FlightRequest.java     POST /api/flights payload
     └── BookingRequest.java    POST /api/bookings payload
+
+src/test/java/com/flightbooking/
+├── FlightBookingApiApplicationTests.java   context wiring
+├── controller/          HTTP contract, over real Tomcat
+│   ├── FlightControllerTest.java
+│   └── BookingControllerTest.java
+└── service/             business rules + concurrency
+    ├── FlightServiceTest.java
+    └── BookingServiceTest.java
 ```
 
 Each layer depends only on the one below it: controllers call services, services own models.
@@ -89,6 +98,40 @@ seats are returned rather than leaked.
 
 Verified against a live server: 10 concurrent requests for a 1-seat flight produced exactly one
 `201` and nine `409`s, leaving `availableSeats: 0`.
+
+## Tests
+
+```bash
+./mvnw test
+```
+
+72 tests, no external services needed.
+
+| Suite | Covers |
+| --- | --- |
+| `FlightServiceTest` | Inventory arithmetic in isolation: a new flight starts full, reservations decrement, a refused reservation changes nothing, releases are clamped at capacity. |
+| `BookingServiceTest` | Booking and cancellation rules, plus four concurrency tests that hammer the seat inventory from 32 threads. |
+| `FlightControllerTest` | The HTTP contract for flights against a real Tomcat: status codes, `Location` header, ISO-8601 dates, error bodies. |
+| `BookingControllerTest` | The HTTP contract for bookings, including that no route returns booking data. |
+| `FlightBookingApiApplicationTests` | Every layer is wired into the Spring context. |
+
+The controller suites run on `RANDOM_PORT` with `TestRestTemplate`, so they exercise real HTTP,
+real Jackson and real error handling rather than a mocked servlet layer.
+
+### The overbooking tests
+
+Overbooking is the rule most worth pinning down, so it is tested at every level and the tests were
+checked against deliberately broken implementations:
+
+- Deleting the "enough seats?" guard fails **11 tests** across all three layers.
+- Keeping the guard but moving it *outside* the lock — the classic check-then-act race, which looks
+  correct in single-threaded tests — is caught by `contentionOnTheLastSeatsNeverOversells`. That
+  test puts 64 threads on a 2-seat flight, where every thread is fighting over the boundary. One
+  round detects the race only about a third of the time, so it runs as a `@RepeatedTest(25)`.
+
+The other concurrency tests assert seat *conservation*: after cancellations race new bookings,
+`seats held + seats available` must still equal the aircraft capacity — no seat invented by a
+double cancellation, none lost by a failed booking.
 
 ## Walkthrough
 

@@ -8,4 +8,6 @@ Searching flights, get APIS.
 
 Plan first, ask questions when in doubt and after that implement it.
 
-2. Made adjustment to the plan as per the scope of implementation.
+1.1. Made adjustment to the plan as per the scope of implementation.
+
+2. Now, add test cases to make sure the functionalities are working as expected
