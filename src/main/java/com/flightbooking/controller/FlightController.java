@@ -3,6 +3,8 @@ package com.flightbooking.controller;
 import com.flightbooking.model.Flight;
 import com.flightbooking.model.FlightRequest;
 import com.flightbooking.service.FlightService;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,19 +17,21 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/flights")
+@RequestMapping("/api/${api.version}/flights")
 public class FlightController {
 
     private final FlightService flightService;
+    private final String apiVersion;
 
-    public FlightController(FlightService flightService) {
+    public FlightController(FlightService flightService, @Value("${api.version}") String apiVersion) {
         this.flightService = flightService;
+        this.apiVersion = apiVersion;
     }
 
     @PostMapping
-    public ResponseEntity<Flight> create(@RequestBody FlightRequest request) {
+    public ResponseEntity<Flight> create(@Valid @RequestBody FlightRequest request) {
         Flight flight = flightService.create(request);
-        return ResponseEntity.created(URI.create("/api/flights/" + flight.getId())).body(flight);
+        return ResponseEntity.created(URI.create("/api/" + apiVersion + "/flights/" + flight.getId())).body(flight);
     }
 
     @GetMapping

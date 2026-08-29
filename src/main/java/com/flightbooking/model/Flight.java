@@ -20,7 +20,7 @@ public class Flight {
     private LocalDateTime arrivalTime;
     private BigDecimal price;
     private int totalSeats;
-    private int availableSeats;
+    private volatile int availableSeats;
 
     public Flight() {
     }
