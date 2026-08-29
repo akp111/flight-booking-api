@@ -194,6 +194,12 @@ curl -X DELETE http://localhost:8080/api/v1/bookings/FB-XXXXXX
 curl http://localhost:8080/api/v1/flights/1        # availableSeats: 3 again
 ```
 
+## Improvements
+
+- Add persistent DB layer for storage
+- Implement GET APIs to be consumed by clients
+- Deploy it to cloud service like EC2
+
 ## Requirements
 
 - Java 21 or later (`java -version`)
